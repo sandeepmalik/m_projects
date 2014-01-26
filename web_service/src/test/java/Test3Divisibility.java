@@ -19,6 +19,7 @@ public class Test3Divisibility {
 
     @Test(dataProvider = "3_1")
     public void testDivisibleBy3(int number, boolean expected) {
+        System.out.println("Checking for divisibility of " + number + " by 3");
         boolean actual = new Example1().isDivisibleBy3(number);
         Assert.assertEquals(expected, actual);
     }

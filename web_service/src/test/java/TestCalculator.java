@@ -29,7 +29,7 @@ public class TestCalculator {
     @DataProvider(name = "add")
     public Iterator<Object[]> dataForAdd() throws Exception {
         List<Object[]> data = new ArrayList<Object[]>();
-        BufferedReader bufferedReader = new BufferedReader(new FileReader("/Users/smalik/Downloads/trends.csv"));
+        BufferedReader bufferedReader = new BufferedReader(new FileReader("calc_tests.csv"));
         String line;
         while ((line = bufferedReader.readLine()) != null) {
             String[] st = line.split(",");

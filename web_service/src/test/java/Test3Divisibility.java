@@ -37,7 +37,7 @@ public class Test3Divisibility {
     @DataProvider(name = "3_1")
     public Iterator<Object[]> testDivisibleBy3DP_1() throws Exception {
         List<Object[]> objects = new ArrayList<Object[]>();
-        BufferedReader bufferedReader = new BufferedReader(new FileReader("/Users/smalik/Downloads/div3.csv"));
+        BufferedReader bufferedReader = new BufferedReader(new FileReader("div3.csv"));
         String line;
         while ((line = bufferedReader.readLine()) != null) {
             String[] parts = line.split(",");

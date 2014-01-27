@@ -1,13 +1,17 @@
 package com.loginapp;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableMap.of;
 
@@ -23,10 +27,20 @@ public class UserService {
 
     private static Map<String, String> valid = new HashMap<String, String>();
 
+    private static final Set<User> users = new HashSet<User>();
+
     static {
         valid.put("sandeep.malik", "password1");
         valid.put("abir.malik", "password2");
         valid.put("monika.ahlawat", "password3");
+    }
+
+    @POST
+    @Path("/create")
+    public Response create(User user) {
+        user.setId(String.valueOf(System.currentTimeMillis()));
+        users.add(user);
+        return Response.ok(user).build();
     }
 
     @POST
@@ -50,4 +64,6 @@ public class UserService {
             }
         }
     }
+
+
 }

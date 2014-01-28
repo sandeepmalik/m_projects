@@ -22,9 +22,9 @@ public class OfferService {
     public Response create(Offer offer) {
         if (offer.getStartDate() != null) {
             if (offer.getEndDate() == null) {
-                return Response.status(400).entity(new Error("endDate is needed if startDate is present")).build();
+                return Response.status(400).entity(new Error("endDate is needed if startDate is present.")).build();
             } else if(offer.getEndDate().before(offer.getStartDate())) {
-                return Response.status(400).entity(new Error("endDate must be greater than startDate")).build();
+                return Response.status(400).entity(new Error("endDate must be greater than startDate.")).build();
             }
         }
         offer.setId(String.valueOf(System.currentTimeMillis()));

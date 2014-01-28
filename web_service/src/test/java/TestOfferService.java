@@ -1,5 +1,7 @@
 import com.google.gson.Gson;
-import com.personal.Offer;
+import com.google.gson.GsonBuilder;
+import com.personal.*;
+import com.personal.Error;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -8,7 +10,12 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.io.FileReader;
+import java.util.Date;
+import java.util.Properties;
 
 /**
  * Author: Monika
@@ -17,30 +24,41 @@ import org.testng.annotations.Test;
  */
 public class TestOfferService {
     private HttpClient httpClient;
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder().setDateFormat("MM/dd/yyyy").create();
+    private Properties errorMessages;
+    private Properties serverProperties;
+
+    @BeforeClass
+    public void init() throws Exception {
+        errorMessages = new Properties();
+        errorMessages.load(this.getClass().getClassLoader().getResourceAsStream("error_messages.properties"));
+        serverProperties = new Properties();
+        serverProperties.load(this.getClass().getClassLoader().getResourceAsStream("server.properties"));
+    }
 
     @Test
     public void testOfferCreation() throws Exception {
-        String file = Utils.fileContent("offer1.json");
+        // Step 1: read the json content from requestJson:
+        String requestJson = Utils.fileContent("offer1.json");
 
-        Offer newOffer = gson.fromJson(file, Offer.class);
+        // Step 2: de serialize the JSON content to java object:
+        Offer newOffer = gson.fromJson(requestJson, Offer.class);
 
+        // make HTTP client:
         httpClient = new DefaultHttpClient();
-        //    Assert.assertNotNull();
-
 
         // create a new Post request with URL:
-        HttpPost postMethod = new HttpPost("http://localhost:8080/offer/create");
+        HttpPost postMethod = new HttpPost("http://"+serverProperties.getProperty("server_url")+"/offer/create");
 
         // set request headers:
-        postMethod.setHeader("Content-Type", "application/json");
-        postMethod.setHeader("Accept", "application/json");
+        postMethod.setHeader("Content-Type", serverProperties.getProperty("content_type"));
+        postMethod.setHeader("Accept", serverProperties.getProperty("accept"));
 
         // set request payload:
-        StringEntity stringEntity = new StringEntity(file);
+        StringEntity stringEntity = new StringEntity(requestJson);
         postMethod.setEntity(stringEntity);
 
-        // get the http response:
+        // send the call to server and get the http response:
         HttpResponse httpResponse = httpClient.execute(postMethod);
 
         // get the status code:
@@ -52,10 +70,96 @@ public class TestOfferService {
         // get the response body / payload:
         HttpEntity responseBodyEntity = httpResponse.getEntity();
         String responseJson = EntityUtils.toString(responseBodyEntity);
-        Offer offer = gson.fromJson(responseJson, Offer.class);
 
-        Assert.assertNotNull(offer.getId());
-        Assert.assertEquals(offer.getType(), newOffer.getType());
+        // de serialize server json response:
+        Offer offerFromServer = gson.fromJson(responseJson, Offer.class);
+
+        Assert.assertNotNull(offerFromServer.getId());
+
+        newOffer.setId(offerFromServer.getId());
+
+        Assert.assertEquals(newOffer, offerFromServer);
+    }
+
+    @Test
+    public void testXXX() {
+        Offer offer = new Offer();
+        offer.setType("My Type");
+        System.out.println(offer);
+
+        // serialization:
+        String json = gson.toJson(offer);
+
+        System.out.println(json);
+
+        // de-serialization:
+        Offer offer1 = gson.fromJson(json, Offer.class);
+        System.out.println(offer1);
+    }
+
+    @Test
+    public void testOfferCreation1() throws Exception {
+        String requestJson = Utils.fileContent("offer2.json");
+        Offer newOffer = gson.fromJson(requestJson, Offer.class);
+        httpClient = new DefaultHttpClient();
+        HttpPost postMethod = new HttpPost("http://"+serverProperties.getProperty("server_url")+"/offer/create");
+        postMethod.setHeader("Content-Type", serverProperties.getProperty("content_type"));
+        postMethod.setHeader("Accept", serverProperties.getProperty("accept"));
+        StringEntity stringEntity = new StringEntity(requestJson);
+        postMethod.setEntity(stringEntity);
+        HttpResponse httpResponse = httpClient.execute(postMethod);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        Assert.assertEquals(statusCode, 200);
+        HttpEntity responseBodyEntity = httpResponse.getEntity();
+        String responseJson = EntityUtils.toString(responseBodyEntity);
+        Offer offerFromServer = gson.fromJson(responseJson, Offer.class);
+        Assert.assertNotNull(offerFromServer.getId());
+        newOffer.setId(offerFromServer.getId());
+        Assert.assertEquals(newOffer, offerFromServer);
+    }
+
+    @Test
+    public void testEndDateRequiredIfStartDatePresent() throws Exception {
+        String requestJson = Utils.fileContent("offer_with_no_end_date.json");
+        Offer newOffer = gson.fromJson(requestJson, Offer.class);
+        httpClient = new DefaultHttpClient();
+        HttpPost postMethod = new HttpPost("http://"+serverProperties.getProperty("server_url")+"/offer/create");
+        postMethod.setHeader("Content-Type", serverProperties.getProperty("content_type"));
+        postMethod.setHeader("Accept", serverProperties.getProperty("accept"));
+        StringEntity stringEntity = new StringEntity(requestJson);
+        postMethod.setEntity(stringEntity);
+        HttpResponse httpResponse = httpClient.execute(postMethod);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        Assert.assertEquals(statusCode, 400);
+        HttpEntity responseBodyEntity = httpResponse.getEntity();
+        String responseJson = EntityUtils.toString(responseBodyEntity);
+        com.personal.Error error = gson.fromJson(responseJson, Error.class);
+        Assert.assertEquals(error.getMessage(), errorMessages.getProperty("end_date_required"));
+    }
+
+    @Test
+    public void testEndDateGreaterThanStartDate() throws Exception {
+        /*Offer offer = new Offer();
+        offer.setStartDate(new Date(2014,01,13));
+        offer.setEndDate(new Date(2014,01,11));
+        String requestJson = gson.toJson(offer);*/
+
+
+        String requestJson = Utils.fileContent("offer_with_end_date_less_than_start_date.json");
+        Offer newOffer = gson.fromJson(requestJson, Offer.class);
+        httpClient = new DefaultHttpClient();
+        HttpPost postMethod = new HttpPost("http://"+serverProperties.getProperty("server_url")+"/offer/create");
+        postMethod.setHeader("Content-Type", serverProperties.getProperty("content_type"));
+        postMethod.setHeader("Accept", serverProperties.getProperty("accept"));
+        StringEntity stringEntity = new StringEntity(requestJson);
+        postMethod.setEntity(stringEntity);
+        HttpResponse httpResponse = httpClient.execute(postMethod);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        Assert.assertEquals(statusCode, 400);
+        HttpEntity responseBodyEntity = httpResponse.getEntity();
+        String responseJson = EntityUtils.toString(responseBodyEntity);
+        com.personal.Error error = gson.fromJson(responseJson, Error.class);
+        Assert.assertEquals(error.getMessage(), errorMessages.getProperty("end_date_bigger_than_start_date"));
     }
 
 

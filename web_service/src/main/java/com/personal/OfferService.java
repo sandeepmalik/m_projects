@@ -1,9 +1,6 @@
 package com.personal;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashSet;
@@ -23,6 +20,13 @@ public class OfferService {
     @POST
     @Path("/create")
     public Response create(Offer offer) {
+        if (offer.getStartDate() != null) {
+            if (offer.getEndDate() == null) {
+                return Response.status(400).entity(new Error("endDate is needed if startDate is present")).build();
+            } else if(offer.getEndDate().before(offer.getStartDate())) {
+                return Response.status(400).entity(new Error("endDate must be greater than startDate")).build();
+            }
+        }
         offer.setId(String.valueOf(System.currentTimeMillis()));
         offers.add(offer);
         return Response.ok(offer).build();

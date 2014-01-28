@@ -2,9 +2,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.personal.*;
 import com.personal.Error;
+import com.sun.tools.corba.se.idl.constExpr.Not;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -162,5 +164,17 @@ public class TestOfferService {
         Assert.assertEquals(error.getMessage(), errorMessages.getProperty("end_date_bigger_than_start_date"));
     }
 
-
+        @Test
+        public void testNonExistentOffer()throws Exception {
+            httpClient = new DefaultHttpClient();
+            HttpGet getMethod = new HttpGet("http://"+serverProperties.getProperty("server_url")+"/offer?id=some_id");
+            getMethod.setHeader("Accept", serverProperties.getProperty("accept"));
+            HttpResponse httpResponse = httpClient.execute(getMethod);
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            Assert.assertEquals(statusCode,404);
+            HttpEntity responseEntity = httpResponse.getEntity();
+            String responseJson = EntityUtils.toString(responseEntity);
+            com.personal.Error error = gson.fromJson(responseJson, Error.class);
+            Assert.assertEquals(error.getMessage(),errorMessages.getProperty("not_found_offer"));
+        }
 }

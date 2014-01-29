@@ -42,4 +42,15 @@ public class OfferService {
             return Response.ok(offers.get(id)).build();
         }
     }
+
+    @GET
+    @Path("/delete")
+    public Response delete(@QueryParam("id") String id) {
+        if (!offers.containsKey(id)) {
+            return Response.status(404).entity(new Error("Not Found")).build();
+        } else {
+            offers.remove(id);
+            return Response.ok(offers.get(id)).build();
+        }
+    }
 }

@@ -188,9 +188,9 @@ public class TestOfferService {
             // serialization:
             String request = gson.toJson(offer);
             // http exchange:
-            String response = Utils.process(httpClient, headers, "post", request, "http://" + serverProperties.getProperty("server_url") + "/offer/create");
+            Utils.Response response = Utils.process(httpClient, headers, "post", request, "http://" + serverProperties.getProperty("server_url") + "/offer/create");
             // de serialize:
-            Offer returnedOffer = gson.fromJson(response, Offer.class);
+            Offer returnedOffer = gson.fromJson(response.getResponse(), Offer.class);
             Assert.assertNotNull(returnedOffer.getId());
             offers.put(returnedOffer.getId(), returnedOffer);
         }
@@ -199,10 +199,34 @@ public class TestOfferService {
 
         for (String offerId : offers.keySet()) {
             Offer offer = offers.get(offerId);
-            String response = Utils.process(httpClient, headers, "get", null, "http://" + serverProperties.getProperty("server_url") + "/offer?id=" + offerId);
+            Utils.Response response = Utils.process(httpClient, headers, "get", null, "http://" + serverProperties.getProperty("server_url") + "/offer?id=" + offerId);
             // de serialize:
-            Offer returnedOffer = gson.fromJson(response, Offer.class);
+            Offer returnedOffer = gson.fromJson(response.getResponse(), Offer.class);
             Assert.assertEquals(offer, returnedOffer);
         }
     }
+
+    @Test
+    public void testOfferDelete() throws Exception {
+        Offer offer = new Offer();
+        String request = gson.toJson(offer);
+        Map<String, String> headers = new HashMap<String, String>();
+        headers.put("Content-Type", serverProperties.getProperty("content_type"));
+        headers.put("Accept", serverProperties.getProperty("accept"));
+        Utils.Response response = Utils.process(httpClient, headers, "post", request, "http://" + serverProperties.getProperty("server_url") + "/offer/create");
+        Offer newOffer = gson.fromJson(response.getResponse(), Offer.class);
+        Assert.assertEquals( response.getStatus(),200);
+        response = Utils.process(httpClient, headers, "get", null, "http://" + serverProperties.getProperty("server_url") + "/offer/delete?id=" + newOffer.getId());
+        Assert.assertEquals(response.getStatus(),200);
+        response = Utils.process(httpClient, headers, "get", request, "http://" + serverProperties.getProperty("server_url") + "/offer?id="+ newOffer.getId());
+         Assert.assertEquals(response.getStatus(),404);
+        com.personal.Error error = gson.fromJson(response.getResponse(),Error.class);
+
+
+
+        Assert.assertEquals(error.getMessage(),errorMessages.getProperty("not_ found"));
+    }
+
+
 }
+

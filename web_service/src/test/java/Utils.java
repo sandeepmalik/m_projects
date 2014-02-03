@@ -32,7 +32,7 @@ public class Utils {
         }
     }
 
-    public static String process(HttpClient httpClient, Map<String, String> headers, String operation, String requestPayload, String serverUrl) throws Exception {
+    public static Response process(HttpClient httpClient, Map<String, String> headers, String operation, String requestPayload, String serverUrl) throws Exception {
         if (operation.equals("post")) {
             HttpPost httpPost = new HttpPost(serverUrl);
             for (String headerName : headers.keySet()) {
@@ -44,7 +44,7 @@ public class Utils {
             HttpResponse httpResponse = httpClient.execute(httpPost);
             HttpEntity responseBodyEntity = httpResponse.getEntity();
             String responseJson = EntityUtils.toString(responseBodyEntity);
-            return responseJson;
+            return new Response(httpResponse.getStatusLine().getStatusCode(), responseJson);
         } else if (operation.equals("get")) {
             HttpGet httpPost = new HttpGet(serverUrl);
             for (String headerName : headers.keySet()) {
@@ -54,9 +54,27 @@ public class Utils {
             HttpResponse httpResponse = httpClient.execute(httpPost);
             HttpEntity responseBodyEntity = httpResponse.getEntity();
             String responseJson = EntityUtils.toString(responseBodyEntity);
-            return responseJson;
+            return new Response(httpResponse.getStatusLine().getStatusCode(), responseJson);
         } else {
             throw new IllegalArgumentException("Invalid operation " + operation);
+        }
+    }
+
+    public static class Response {
+        int status;
+        String response;
+
+        public Response(int status, String response) {
+            this.status = status;
+            this.response = response;
+        }
+
+        public int getStatus() {
+            return status;
+        }
+
+        public String getResponse() {
+            return response;
         }
     }
 }
